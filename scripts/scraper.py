@@ -49,24 +49,30 @@ def scrape_skillhub():
     # 匹配 "22.7K Skills" 或 "22,700+ Skills"
     m = re.search(r"([\d,\.]+[KkMm]?)\s*Skills", html)
     if m:
-        raw = m.group(1).upper().replace(",", "")
-        if "K" in raw:
-            result["total_skills"] = int(float(raw.replace("K", "")) * 1000)
-        elif "M" in raw:
-            result["total_skills"] = int(float(raw.replace("M", "")) * 1_000_000)
-        else:
-            result["total_skills"] = int(raw)
+        raw = m.group(1).upper().replace(",", "").strip()
+        try:
+            if "K" in raw:
+                result["total_skills"] = int(float(raw.replace("K", "")) * 1000)
+            elif "M" in raw:
+                result["total_skills"] = int(float(raw.replace("M", "")) * 1_000_000)
+            else:
+                result["total_skills"] = int(float(raw))
+        except (ValueError, TypeError):
+            pass
 
     # 匹配 "4.6M Stars"
     m2 = re.search(r"([\d,\.]+[KkMm]?)\s*Stars", html)
     if m2:
-        raw = m2.group(1).upper().replace(",", "")
-        if "M" in raw:
-            result["total_stars"] = int(float(raw.replace("M", "")) * 1_000_000)
-        elif "K" in raw:
-            result["total_stars"] = int(float(raw.replace("K", "")) * 1000)
-        else:
-            result["total_stars"] = int(raw)
+        raw = m2.group(1).upper().replace(",", "").strip()
+        try:
+            if "M" in raw:
+                result["total_stars"] = int(float(raw.replace("M", "")) * 1_000_000)
+            elif "K" in raw:
+                result["total_stars"] = int(float(raw.replace("K", "")) * 1000)
+            else:
+                result["total_stars"] = int(float(raw))
+        except (ValueError, TypeError):
+            pass
 
     print(f"    → skills={result['total_skills']}, stars={result['total_stars']}")
     return result
