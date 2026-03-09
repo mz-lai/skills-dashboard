@@ -1,0 +1,160 @@
+{
+  "meta": {
+    "updated_at": "2026-03-09T01:51:40.456221+00:00",
+    "updated_date": "2026-03-09",
+    "sources": [
+      "skillhub.club",
+      "skillsmp.com",
+      "api.github.com"
+    ]
+  },
+  "summary": {
+    "total_skills": 22700,
+    "total_stars": null,
+    "monthly_delta": null
+  },
+  "github": {
+    "repos": {},
+    "skill_md_count": null,
+    "topic_claude_skills": null
+  },
+  "skillsmp": {
+    "total": null
+  },
+  "history": [
+    {
+      "date": "2026-03-09",
+      "total": 22700
+    }
+  ],
+  "categories": [
+    {
+      "name": "💻 开发工具",
+      "count": 8400,
+      "growth6m": 38,
+      "color": "#58a6ff"
+    },
+    {
+      "name": "🤖 AI/ML",
+      "count": 2100,
+      "growth6m": 95,
+      "color": "#3fb950"
+    },
+    {
+      "name": "📊 金融服务",
+      "count": 1850,
+      "growth6m": 420,
+      "color": "#e3b341"
+    },
+    {
+      "name": "📝 内容创作",
+      "count": 1600,
+      "growth6m": 52,
+      "color": "#4ecdc4"
+    },
+    {
+      "name": "📈 数据分析",
+      "count": 1400,
+      "growth6m": 88,
+      "color": "#a371f7"
+    },
+    {
+      "name": "⚙️ DevOps",
+      "count": 1200,
+      "growth6m": 41,
+      "color": "#f0883e"
+    },
+    {
+      "name": "⚖️ 法律服务",
+      "count": 680,
+      "growth6m": 310,
+      "color": "#f778ba"
+    },
+    {
+      "name": "🏥 医疗健康",
+      "count": 520,
+      "growth6m": 180,
+      "color": "#22d3ee"
+    },
+    {
+      "name": "📦 产品管理",
+      "count": 480,
+      "growth6m": 260,
+      "color": "#84cc16"
+    },
+    {
+      "name": "🎨 设计创意",
+      "count": 420,
+      "growth6m": 75,
+      "color": "#f59e0b"
+    },
+    {
+      "name": "🔒 网络安全",
+      "count": 380,
+      "growth6m": 110,
+      "color": "#fb7185"
+    },
+    {
+      "name": "🎓 教育学习",
+      "count": 370,
+      "growth6m": 60,
+      "color": "#c084fc"
+    }
+  ],
+  "agents": [
+    {
+      "name": "Claude",
+      "count": 18500,
+      "growth6m": 95,
+      "color": "#f0883e"
+    },
+    {
+      "name": "Cursor",
+      "count": 14200,
+      "growth6m": 82,
+      "color": "#58a6ff"
+    },
+    {
+      "name": "OpenClaw",
+      "count": 8600,
+      "growth6m": 680,
+      "color": "#3fb950"
+    },
+    {
+      "name": "OpenCode",
+      "count": 7800,
+      "growth6m": 120,
+      "color": "#8b949e"
+    },
+    {
+      "name": "Windsurf",
+      "count": 7200,
+      "growth6m": 95,
+      "color": "#39d3c3"
+    },
+    {
+      "name": "Cline",
+      "count": 6400,
+      "growth6m": 65,
+      "color": "#a371f7"
+    },
+    {
+      "name": "Roo Code",
+      "count": 5800,
+      "growth6m": 75,
+      "color": "#f778ba"
+    },
+    {
+      "name": "Augment",
+      "count": 4200,
+      "growth6m": 140,
+      "color": "#e3b341"
+    },
+    {
+      "name": "Aide",
+      "count": 3100,
+      "growth6m": 90,
+      "color": "#22d3ee"
+    }
+  ]
+}

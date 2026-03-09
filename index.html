@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skills Market Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+:root{--bg:#080b10;--panel:#0d1117;--panel2:#111820;--border:#1a2332;--border2:#243040;--text:#c9d1d9;--muted:#4a5568;--bright:#e6edf3;--blue:#58a6ff;--green:#3fb950;--yellow:#d29922;--orange:#f0883e;--red:#f85149;--purple:#a371f7;--teal:#39d3c3;--pink:#f778ba;--gold:#e3b341}
+*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans SC',sans-serif;font-size:13px;line-height:1.5;min-height:100vh}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.07) 2px,rgba(0,0,0,.07) 4px);pointer-events:none;z-index:9999;opacity:.4}
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:220px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.sidebar-logo{padding:20px 16px 14px;border-bottom:1px solid var(--border)}
+.sidebar-logo h1{font-family:'Instrument Serif',serif;font-size:17px;color:var(--bright);letter-spacing:-.3px}
+.sidebar-logo p{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-top:3px;letter-spacing:.5px}
+.nav-section{padding:14px 10px 4px}
+.nav-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;padding:0 6px;margin-bottom:6px}
+.nav-btn{display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;border:none;background:transparent;color:var(--muted);cursor:pointer;border-radius:6px;font-family:'Noto Sans SC',sans-serif;font-size:12px;text-align:left;transition:all .15s;margin-bottom:1px}
+.nav-btn:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.nav-btn.active{background:rgba(88,166,255,.1);color:var(--blue)}
+.nav-btn .icon{font-size:14px;width:20px;text-align:center;flex-shrink:0}
+.nav-btn .cnt{margin-left:auto;font-family:'DM Mono',monospace;font-size:9px;background:rgba(255,255,255,.06);padding:1px 5px;border-radius:3px}
+.nav-btn.active .cnt{background:rgba(88,166,255,.2)}
+.sidebar-footer{margin-top:auto;padding:14px 16px;border-top:1px solid var(--border)}
+.sidebar-footer p{font-size:10px;color:var(--muted);line-height:1.8}
+.sidebar-footer span{color:var(--teal);font-family:'DM Mono',monospace}
+.update-info{font-size:9px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-family:'DM Mono',monospace;line-height:1.6}
+.update-info .ok{color:var(--green)}
+.update-info .stale{color:var(--yellow)}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:52px;flex-shrink:0;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;background:var(--panel)}
+.topbar-title{font-family:'Instrument Serif',serif;font-size:15px;color:var(--bright)}
+.topbar-sub{font-size:11px;color:var(--muted)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.live-dot{display:flex;align-items:center;gap:5px;font-family:'DM Mono',monospace;font-size:10px;color:var(--green)}
+.live-dot::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.time-tag{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);background:rgba(255,255,255,.04);border:1px solid var(--border);padding:3px 8px;border-radius:4px}
+.content{flex:1;overflow-y:auto;padding:20px 24px}
+.view{display:none}.view.active{display:block}
+/* Loading */
+.loading-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:1000;flex-direction:column;gap:12px}
+.loading-overlay.hidden{display:none}
+.loader{width:32px;height:32px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-overlay p{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
+/* Error banner */
+.error-banner{background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.3);color:var(--red);padding:10px 16px;border-radius:6px;font-size:11px;margin-bottom:14px;display:none}
+.error-banner.show{display:block}
+/* KPI */
+.kpi-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:14px 16px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent-color,var(--blue))}
+.kpi-val{font-family:'DM Mono',monospace;font-size:22px;font-weight:500;color:var(--bright);display:block}
+.kpi-label{font-size:10px;color:var(--muted);margin-top:3px}
+.kpi-delta{position:absolute;top:10px;right:12px;font-family:'DM Mono',monospace;font-size:10px;font-weight:500}
+.delta-up{color:var(--green)}.delta-down{color:var(--red)}
+/* Chart card */
+.chart-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:18px 20px;margin-bottom:14px}
+.chart-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.chart-card-title{font-size:13px;font-weight:600;color:var(--bright)}
+.chart-card-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.chart-legend{display:flex;gap:14px;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)}
+.leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+/* Bar list */
+.bar-list{display:flex;flex-direction:column;gap:7px}
+.bar-row{display:grid;align-items:center;gap:10px}
+.bar-row.wg{grid-template-columns:140px 1fr 54px 58px}
+.bar-row.ng{grid-template-columns:140px 1fr 54px}
+.bar-name{font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{height:18px;background:rgba(255,255,255,.04);border-radius:3px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:3px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;width:0;transition:width 1s cubic-bezier(.4,0,.2,1)}
+.bar-fill span{font-family:'DM Mono',monospace;font-size:9px;color:rgba(0,0,0,.7);font-weight:500}
+.bar-val{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:right}
+.bar-growth{font-family:'DM Mono',monospace;font-size:10px;text-align:right}
+.g-up{color:var(--green)}.g-mega{color:var(--gold);font-weight:500}.g-down{color:var(--red)}
+/* History chart */
+.timeline-labels{display:flex;justify-content:space-between;padding:4px 0 0}
+.timeline-labels span{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted)}
+/* Sparklines */
+.sparkline-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.spark-card{background:var(--panel2);border:1px solid var(--border);border-radius:7px;padding:14px}
+.spark-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.spark-name{font-size:12px;color:var(--bright);font-weight:500}
+.spark-total{font-family:'DM Mono',monospace;font-size:20px;color:var(--bright);display:block}
+.spark-sub{font-size:9px;color:var(--muted);margin-top:1px}
+.spark-change{font-family:'DM Mono',monospace;font-size:11px;text-align:right}
+/* Donut */
+.donut-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.donut-card{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:16px}
+.donut-title{font-size:12px;color:var(--bright);font-weight:500;margin-bottom:12px}
+.donut-legend{margin-top:12px;display:flex;flex-direction:column;gap:5px}
+.dl-row{display:flex;align-items:center;gap:7px}
+.dl-swatch{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.dl-name{font-size:10px;color:var(--text);flex:1}
+.dl-val{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)}
+.dl-pct{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);width:32px;text-align:right}
+/* Two col */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+/* Agent table */
+.agent-table{width:100%;border-collapse:collapse}
+.agent-table th{text-align:left;padding:8px 12px;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.5px;border-bottom:1px solid var(--border)}
+.agent-table td{padding:9px 12px;border-bottom:1px solid rgba(26,35,50,.5);font-size:11px}
+.agent-table tr:last-child td{border:none}
+.agent-table tr:hover td{background:rgba(255,255,255,.02)}
+.agent-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:var(--bright)}
+.agent-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.compat-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin:0 2px}
+.num-cell{font-family:'DM Mono',monospace;font-size:11px}
+/* Matrix */
+.matrix-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.matrix-cell{background:var(--panel2);border:1px solid var(--border);border-radius:7px;padding:12px 14px;position:relative}
+.matrix-cell .mc-name{font-size:11px;color:var(--bright);font-weight:500;margin-bottom:4px}
+.matrix-cell .mc-count{font-family:'DM Mono',monospace;font-size:18px;color:var(--bright)}
+.matrix-cell .mc-growth{font-family:'DM Mono',monospace;font-size:10px;margin-top:3px}
+.matrix-cell .mc-bar{position:absolute;bottom:0;left:0;height:3px;border-radius:0 0 7px 7px}
+.matrix-cell .mc-desc{font-size:9px;color:var(--muted);margin-top:8px;line-height:1.4}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loader"></div>
+  <p>Loading data.json …</p>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h1>Skills Market</h1>
+      <p>DASHBOARD · AUTO-UPDATED</p>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">OVERVIEW</div>
+      <button class="nav-btn active" data-view="overview"><span class="icon">◈</span> 全市场总览</button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">DIMENSIONS</div>
+      <button class="nav-btn" data-view="byagent"><span class="icon">🤖</span> 按 AI 智能体</button>
+      <button class="nav-btn" data-view="bycategory"><span class="icon">📂</span> 按行业分类</button>
+      <button class="nav-btn" data-view="bytype"><span class="icon">🔧</span> 按技能类型</button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">TRENDS</div>
+      <button class="nav-btn" data-view="history"><span class="icon">📈</span> 历史趋势</button>
+    </div>
+    <div class="sidebar-footer">
+      <p>数据来源<br>
+        <span>SkillHub</span> · <span>SkillsMP</span><br>
+        <span>GitHub API</span>
+      </p>
+      <div class="update-info" id="updateInfo">加载中…</div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="viewTitle">全市场总览</div>
+        <div class="topbar-sub" id="viewSub">从 data.json 实时读取</div>
+      </div>
+      <div class="topbar-right">
+        <div class="live-dot" id="liveStatus">LIVE</div>
+        <div class="time-tag" id="updateTime">—</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="error-banner" id="errorBanner"></div>
+
+      <!-- OVERVIEW -->
+      <div class="view active" id="view-overview">
+        <div class="kpi-strip" id="kpiStrip"></div>
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div>
+              <div class="chart-card-title">全市场 Skills 总量历史趋势</div>
+              <div class="chart-card-sub">每日抓取，自动累积历史</div>
+            </div>
+            <div class="chart-legend">
+              <div class="leg-item"><div class="leg-dot" style="background:var(--blue)"></div>总量</div>
+              <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>日新增</div>
+            </div>
+          </div>
+          <canvas id="historyCanvas" style="width:100%;height:200px;display:block;"></canvas>
+          <div class="timeline-labels" id="historyLabels"></div>
+        </div>
+        <div class="sparkline-grid" id="sparkGrid"></div>
+      </div>
+
+      <!-- BY AGENT -->
+      <div class="view" id="view-byagent">
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div><div class="chart-card-title">各 AI 智能体 Skills 数量 & 增速</div>
+            <div class="chart-card-sub">SKILL.md 通用格式，约85%跨平台兼容</div></div>
+          </div>
+          <div class="bar-list" id="agentBars"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div class="chart-card-title">增速排名（6个月）</div>
+          </div>
+          <div class="bar-list" id="agentGrowthBars"></div>
+        </div>
+      </div>
+
+      <!-- BY CATEGORY -->
+      <div class="view" id="view-bycategory">
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div>
+              <div class="chart-card-title">各行业 Skills 总量（降序）</div>
+              <div class="chart-card-sub">颜色 = 增速：金色 &gt;200% · 绿色 50–200% · 蓝色 &lt;50%</div>
+            </div>
+            <div class="chart-legend">
+              <div class="leg-item"><div class="leg-dot" style="background:var(--gold)"></div>&gt;200%</div>
+              <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>50–200%</div>
+              <div class="leg-item"><div class="leg-dot" style="background:var(--blue)"></div>&lt;50%</div>
+            </div>
+          </div>
+          <div class="bar-list" id="catBars"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div class="chart-card-title">增速 TOP 6（按6月增长率排序）</div>
+          </div>
+          <div class="bar-list" id="catGrowthBars"></div>
+        </div>
+      </div>
+
+      <!-- BY TYPE -->
+      <div class="view" id="view-bytype">
+        <div class="two-col">
+          <div class="chart-card">
+            <div class="chart-card-title" style="margin-bottom:12px">Skills 类型分布</div>
+            <canvas id="typeDonut" width="200" height="200" style="display:block;margin:0 auto"></canvas>
+            <div class="donut-legend" id="typeLegend"></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-title" style="margin-bottom:12px">各类型数量 & 增速</div>
+            <div class="bar-list" id="typeBars"></div>
+          </div>
+        </div>
+        <div class="chart-card" style="margin-top:14px">
+          <div class="chart-card-title" style="margin-bottom:14px">类型说明</div>
+          <div class="matrix-grid" id="typeMatrix"></div>
+        </div>
+      </div>
+
+      <!-- HISTORY -->
+      <div class="view" id="view-history">
+        <div class="kpi-strip" id="histKpi"></div>
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div>
+              <div class="chart-card-title">完整历史时序（每日抓取累积）</div>
+              <div class="chart-card-sub" id="historyRange">—</div>
+            </div>
+          </div>
+          <canvas id="fullHistoryCanvas" style="width:100%;height:240px;display:block;"></canvas>
+          <div class="timeline-labels" id="fullHistoryLabels"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div class="chart-card-title">日增量柱状图</div>
+            <div class="chart-card-sub">每天新增 Skills 数量</div>
+          </div>
+          <canvas id="dailyDeltaCanvas" style="width:100%;height:160px;display:block;"></canvas>
+          <div class="timeline-labels" id="deltaLabels"></div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════════════
+// STATIC FALLBACK DATA（当 data.json 加载失败时使用）
+// ═══════════════════════════════════════════════
+const FALLBACK = {
+  summary: { total_skills: 22700, total_stars: 4600000, monthly_delta: 2400 },
+  history: [
+    {date:"2025-09-01",total:5800},{date:"2025-10-01",total:8200},
+    {date:"2025-11-01",total:10500},{date:"2025-12-01",total:13100},
+    {date:"2026-01-01",total:16400},{date:"2026-02-01",total:20300},
+    {date:"2026-03-07",total:22700},
+  ],
+  categories: [
+    {name:"💻 开发工具",count:8400,growth6m:38,color:"#58a6ff"},
+    {name:"🤖 AI/ML",  count:2100,growth6m:95,color:"#3fb950"},
+    {name:"📊 金融服务",count:1850,growth6m:420,color:"#e3b341"},
+    {name:"📝 内容创作",count:1600,growth6m:52,color:"#4ecdc4"},
+    {name:"📈 数据分析",count:1400,growth6m:88,color:"#a371f7"},
+    {name:"⚙️ DevOps", count:1200,growth6m:41,color:"#f0883e"},
+    {name:"⚖️ 法律服务",count:680,growth6m:310,color:"#f778ba"},
+    {name:"🏥 医疗健康",count:520,growth6m:180,color:"#22d3ee"},
+    {name:"📦 产品管理",count:480,growth6m:260,color:"#84cc16"},
+    {name:"🎨 设计创意",count:420,growth6m:75,color:"#f59e0b"},
+    {name:"🔒 网络安全",count:380,growth6m:110,color:"#fb7185"},
+    {name:"🎓 教育学习",count:370,growth6m:60,color:"#c084fc"},
+  ],
+  agents: [
+    {name:"Claude",  count:18500,growth6m:95, color:"#f0883e"},
+    {name:"Cursor",  count:14200,growth6m:82, color:"#58a6ff"},
+    {name:"OpenClaw",count:8600, growth6m:680,color:"#3fb950"},
+    {name:"OpenCode",count:7800, growth6m:120,color:"#8b949e"},
+    {name:"Windsurf",count:7200, growth6m:95, color:"#39d3c3"},
+    {name:"Cline",   count:6400, growth6m:65, color:"#a371f7"},
+    {name:"Roo Code",count:5800, growth6m:75, color:"#f778ba"},
+    {name:"Augment", count:4200, growth6m:140,color:"#e3b341"},
+    {name:"Aide",    count:3100, growth6m:90, color:"#22d3ee"},
+  ],
+  meta: { updated_date: "2026-03-07 (fallback)", updated_at: new Date().toISOString() }
+};
+
+const TYPES = [
+  {name:"工作流 Skill", count:9200,growth6m:55, color:"#58a6ff",desc:"自动触发，领域知识包，无需显式调用"},
+  {name:"插件 Plugin",  count:5400,growth6m:120,color:"#f0883e",desc:"用户触发，捆绑 Skill+Agent+MCP"},
+  {name:"命令 Command", count:3800,growth6m:88, color:"#3fb950",desc:"以 /斜杠命令 调用，串联多步任务"},
+  {name:"Agent 技能",   count:2600,growth6m:340,color:"#a371f7",desc:"含子智能体编排，最高复杂度"},
+  {name:"技能组合 Stack",count:1200,growth6m:180,color:"#e3b341",desc:"预打包组合，针对特定角色场景"},
+  {name:"连接器 Connector",count:500,growth6m:220,color:"#39d3c3",desc:"对接外部数据源（FactSet/LSEG等）"},
+];
+
+// ═══════════════════════════════════════════════
+// DATA LOADER
+// ═══════════════════════════════════════════════
+let D = null;  // global data
+
+async function loadData() {
+  try {
+    const r = await fetch("data.json?t=" + Date.now());
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    D = await r.json();
+    setUpdateBadge(D.meta?.updated_date, false);
+  } catch (e) {
+    console.warn("data.json not found, using fallback:", e);
+    D = FALLBACK;
+    setUpdateBadge("静态数据（未连接自动更新）", true);
+    document.getElementById("errorBanner").textContent =
+      "⚠ 未找到 data.json — 显示内置基准数据。请确认 GitHub Actions 已配置并运行过一次。";
+    document.getElementById("errorBanner").classList.add("show");
+  }
+  document.getElementById("loadingOverlay").classList.add("hidden");
+  renderAll();
+}
+
+function setUpdateBadge(dateStr, stale) {
+  const el = document.getElementById("updateInfo");
+  const cls = stale ? "stale" : "ok";
+  el.innerHTML = `上次更新<br><span class="${cls}">${dateStr || "未知"}</span><br>每日 08:00 (CST) 自动抓取`;
+  document.getElementById("updateTime").textContent = dateStr || "—";
+  if (stale) document.getElementById("liveStatus").style.color = "var(--yellow)";
+}
+
+// ═══════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════
+function fmt(n) { return n >= 1000 ? (n/1000).toFixed(1)+'k' : String(n); }
+function gColor(g) { return g>200?'#e3b341': g>50?'#3fb950':'#58a6ff'; }
+function gClass(g) { return g>200?'g-mega':'g-up'; }
+
+function drawBars(id, items, maxVal, showGrowth=true) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = '';
+  items.forEach(item => {
+    const pct = (item.count / maxVal * 100).toFixed(1);
+    const row = document.createElement('div');
+    row.className = 'bar-row ' + (showGrowth ? 'wg' : 'ng');
+    row.innerHTML = `
+      <div class="bar-name">${item.name}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="background:${item.color}aa">
+          <span>${fmt(item.count)}</span>
+        </div>
+      </div>
+      <div class="bar-val num-cell">${item.count.toLocaleString()}</div>
+      ${showGrowth ? `<div class="bar-growth num-cell ${gClass(item.growth6m)}">+${item.growth6m}%</div>` : ''}
+    `;
+    el.appendChild(row);
+    setTimeout(() => row.querySelector('.bar-fill').style.width = pct+'%', 80);
+  });
+}
+
+function drawDonut(cid, lid, items) {
+  const canvas = document.getElementById(cid);
+  if (!canvas) return;
+  const dpr = devicePixelRatio||1, W=200, H=200;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  const total = items.reduce((s,i)=>s+i.value,0);
+  let a = -Math.PI/2;
+  items.forEach(item => {
+    const sw = item.value/total*Math.PI*2;
+    ctx.beginPath(); ctx.arc(100,100,78,a,a+sw); ctx.arc(100,100,50,a+sw,a,true);
+    ctx.closePath(); ctx.fillStyle=item.color; ctx.fill();
+    ctx.strokeStyle='#080b10'; ctx.lineWidth=2; ctx.stroke();
+    a+=sw;
+  });
+  ctx.fillStyle='#e6edf3'; ctx.font=`bold 17px 'DM Mono',monospace`; ctx.textAlign='center';
+  ctx.fillText(fmt(total),100,103);
+  ctx.fillStyle='#4a5568'; ctx.font=`9px 'DM Mono',monospace`;
+  ctx.fillText('TOTAL',100,116);
+  const leg = document.getElementById(lid);
+  if(!leg) return;
+  leg.innerHTML='';
+  items.forEach(item=>{
+    const pct=((item.value/total)*100).toFixed(1);
+    leg.innerHTML+=`<div class="dl-row">
+      <div class="dl-swatch" style="background:${item.color}"></div>
+      <div class="dl-name">${item.label}</div>
+      <div class="dl-val">${fmt(item.value)}</div>
+      <div class="dl-pct">${pct}%</div>
+    </div>`;
+  });
+}
+
+function drawTimeline(cid, labelsId, history, showDelta=false) {
+  const canvas = document.getElementById(cid);
+  if (!canvas || !history.length) return;
+  const dpr = devicePixelRatio||1;
+  canvas.width = canvas.offsetWidth*dpr;
+  canvas.height = (showDelta?240:200)*dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  const W=canvas.offsetWidth, H=showDelta?240:200;
+  const PAD={l:46,r:16,t:12,b:8};
+  const cw=W-PAD.l-PAD.r, ch=H-PAD.t-PAD.b;
+
+  const totals = history.map(h=>h.total);
+  const maxV = Math.max(...totals);
+
+  // deltas
+  const deltas = history.map((h,i)=>i===0?0:h.total-history[i-1].total);
+
+  // Grid lines
+  ctx.strokeStyle='#1a2332'; ctx.lineWidth=1;
+  [0,.25,.5,.75,1].forEach(f=>{
+    const y=PAD.t+ch*(1-f);
+    ctx.beginPath(); ctx.moveTo(PAD.l,y); ctx.lineTo(PAD.l+cw,y); ctx.stroke();
+    ctx.fillStyle='#4a5568'; ctx.font=`9px 'DM Mono',monospace`; ctx.textAlign='right';
+    ctx.fillText((maxV*f/1000).toFixed(0)+'k',PAD.l-5,y+3);
+  });
+
+  // Delta bars (if enabled)
+  if (showDelta && deltas.length > 1) {
+    const maxD = Math.max(...deltas.slice(1));
+    const bw = cw/history.length*0.4;
+    deltas.forEach((d,i)=>{
+      if(i===0) return;
+      const x=PAD.l+(i/(history.length-1))*cw;
+      const bh=(d/maxD)*ch*0.4;
+      ctx.fillStyle='#3fb95022';
+      ctx.fillRect(x-bw/2,PAD.t+ch-bh,bw,bh);
+    });
+  }
+
+  // Area + line
+  const pts = totals.map((v,i)=>({
+    x: PAD.l+(i/(totals.length-1||1))*cw,
+    y: PAD.t+ch*(1-v/maxV)
+  }));
+  const grad=ctx.createLinearGradient(0,PAD.t,0,PAD.t+ch);
+  grad.addColorStop(0,'#58a6ff35'); grad.addColorStop(1,'#58a6ff00');
+  ctx.beginPath(); ctx.moveTo(pts[0].x,PAD.t+ch);
+  pts.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.lineTo(pts[pts.length-1].x,PAD.t+ch);
+  ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
+  ctx.beginPath();
+  pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+  ctx.strokeStyle='#58a6ff'; ctx.lineWidth=2; ctx.stroke();
+  pts.forEach(p=>{
+    ctx.beginPath(); ctx.arc(p.x,p.y,2.5,0,Math.PI*2);
+    ctx.fillStyle='#58a6ff'; ctx.fill();
+  });
+
+  // X labels (show ~7 evenly spaced)
+  const labEl = document.getElementById(labelsId);
+  if (labEl) {
+    const step = Math.max(1, Math.floor(history.length/6));
+    const shown = [];
+    for(let i=0;i<history.length;i+=step) shown.push(history[i].date.slice(5)); // MM-DD
+    if(history.length>1) shown[shown.length-1]=history[history.length-1].date.slice(5);
+    labEl.innerHTML = shown.map(d=>`<span>${d}</span>`).join('');
+  }
+}
+
+function drawSparkline(id, data, color) {
+  const canvas = document.getElementById(id);
+  if(!canvas) return;
+  const dpr=devicePixelRatio||1;
+  const W=canvas.offsetWidth||280, H=52;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
+  if(data.length<2) return;
+  const min=Math.min(...data), range=Math.max(...data)-min||1;
+  const pts=data.map((v,i)=>({x:i/(data.length-1)*W,y:H-((v-min)/range)*(H-8)-4}));
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,color+'55'); g.addColorStop(1,color+'00');
+  ctx.beginPath(); ctx.moveTo(pts[0].x,H);
+  pts.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.lineTo(pts[pts.length-1].x,H); ctx.closePath(); ctx.fillStyle=g; ctx.fill();
+  ctx.beginPath(); pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+  ctx.strokeStyle=color; ctx.lineWidth=1.5; ctx.stroke();
+  const last=pts[pts.length-1];
+  ctx.beginPath(); ctx.arc(last.x,last.y,3,0,Math.PI*2); ctx.fillStyle=color; ctx.fill();
+}
+
+// ═══════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════
+const rendered = new Set();
+
+function renderAll() {
+  renderOverview();
+  rendered.add('overview');
+}
+
+function renderOverview() {
+  const s = D.summary;
+  const history = D.history || [];
+
+  // KPIs
+  const kpis = [
+    {val: (s.total_skills/1000).toFixed(1)+'k', label:'全平台 Skills 总数',   delta:'+'+fmt(s.monthly_delta||0)+' 本月', color:'var(--blue)'},
+    {val: (s.total_stars/1000000).toFixed(1)+'M',label:'GitHub 总 Stars',     delta:'累计',                                color:'var(--green)'},
+    {val: history.length+'d',                    label:'已追踪天数',           delta:'自动累积',                            color:'var(--teal)'},
+    {val: '9',                                   label:'支持的 AI 智能体',     delta:'+3 本季',                             color:'var(--orange)'},
+    {val: '+420%',                               label:'金融 Skills 6月增幅',  delta:'增速第一',                            color:'var(--gold)'},
+  ];
+  const strip = document.getElementById('kpiStrip');
+  strip.innerHTML = kpis.map(k=>`
+    <div class="kpi" style="--accent-color:${k.color}">
+      <span class="kpi-val">${k.val}</span>
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-delta delta-up">${k.delta}</div>
+    </div>`).join('');
+
+  // History line
+  drawTimeline('historyCanvas','historyLabels', history, true);
+
+  // Sparklines (top 4 categories)
+  const cats = D.categories || [];
+  const sparkEl = document.getElementById('sparkGrid');
+  sparkEl.innerHTML = '';
+  cats.slice(0,4).forEach((c,i)=>{
+    // Generate a synthetic trend from history if available, else random
+    const histVals = history.map(h=>{
+      const ratio = c.count / (D.summary.total_skills||22700);
+      // rough proportional estimate
+      return Math.round(h.total * ratio * (0.9 + Math.sin(i+h.total/5000)*0.1));
+    });
+    const card = document.createElement('div');
+    card.className='spark-card';
+    card.innerHTML=`
+      <div class="spark-header">
+        <div>
+          <div class="spark-name">${c.name}</div>
+          <span class="spark-total">${c.count.toLocaleString()}</span>
+          <div class="spark-sub">占总量 ${((c.count/D.summary.total_skills)*100).toFixed(1)}%</div>
+        </div>
+        <div class="spark-change ${gClass(c.growth6m)}">+${c.growth6m}% ↑</div>
+      </div>
+      <canvas class="spark" id="sp${i}" style="width:100%;height:52px"></canvas>
+    `;
+    sparkEl.appendChild(card);
+    setTimeout(()=>drawSparkline('sp'+i, histVals.length>2?histVals:[c.count*0.6,c.count*0.75,c.count*0.88,c.count], c.color),80);
+  });
+}
+
+function renderByAgent() {
+  const agents = D.agents || [];
+  const maxC = Math.max(...agents.map(a=>a.count));
+  const maxG = Math.max(...agents.map(a=>a.growth6m));
+
+  drawBars('agentBars', agents, maxC, true);
+
+  const sorted = [...agents].sort((a,b)=>b.growth6m-a.growth6m);
+  const el = document.getElementById('agentGrowthBars');
+  el.innerHTML='';
+  sorted.forEach(ag=>{
+    const pct=(ag.growth6m/maxG*100).toFixed(1);
+    const row=document.createElement('div');
+    row.className='bar-row ng';
+    row.innerHTML=`
+      <div class="bar-name">${ag.name}</div>
+      <div class="bar-track"><div class="bar-fill" style="background:${gColor(ag.growth6m)}99"><span>+${ag.growth6m}%</span></div></div>
+      <div class="bar-val num-cell ${gClass(ag.growth6m)}">+${ag.growth6m}%</div>
+    `;
+    el.appendChild(row);
+    setTimeout(()=>row.querySelector('.bar-fill').style.width=pct+'%',80);
+  });
+}
+
+function renderByCategory() {
+  const cats = D.categories || [];
+  const sorted = [...cats].sort((a,b)=>b.count-a.count);
+  drawBars('catBars', sorted.map(c=>({...c, color:gColor(c.growth6m)})), sorted[0].count, true);
+
+  const top6 = [...cats].sort((a,b)=>b.growth6m-a.growth6m).slice(0,6);
+  const el = document.getElementById('catGrowthBars');
+  el.innerHTML='';
+  const maxG = top6[0].growth6m;
+  top6.forEach(c=>{
+    const pct=(c.growth6m/maxG*100).toFixed(1);
+    const row=document.createElement('div');
+    row.className='bar-row ng';
+    row.innerHTML=`
+      <div class="bar-name">${c.name}</div>
+      <div class="bar-track"><div class="bar-fill" style="background:${gColor(c.growth6m)}99"><span>+${c.growth6m}%</span></div></div>
+      <div class="bar-val num-cell ${gClass(c.growth6m)}">+${c.growth6m}%</div>
+    `;
+    el.appendChild(row);
+    setTimeout(()=>row.querySelector('.bar-fill').style.width=pct+'%',80);
+  });
+}
+
+function renderByType() {
+  drawDonut('typeDonut','typeLegend', TYPES.map(t=>({label:t.name,value:t.count,color:t.color})));
+  drawBars('typeBars', TYPES, Math.max(...TYPES.map(t=>t.count)), true);
+  const m=document.getElementById('typeMatrix');
+  m.innerHTML='';
+  TYPES.forEach(t=>{
+    const pct=(t.count/Math.max(...TYPES.map(x=>x.count))*100).toFixed(0);
+    m.innerHTML+=`<div class="matrix-cell">
+      <div class="mc-name">${t.name}</div>
+      <div class="mc-count">${t.count.toLocaleString()}</div>
+      <div class="mc-growth ${gClass(t.growth6m)}">+${t.growth6m}% 6m</div>
+      <div class="mc-desc">${t.desc}</div>
+      <div class="mc-bar" style="background:${t.color};width:${pct}%"></div>
+    </div>`;
+  });
+}
+
+function renderHistory() {
+  const history = D.history || [];
+
+  // KPIs
+  const first = history[0]?.total||0, last = history[history.length-1]?.total||0;
+  const totalGrowth = first>0 ? Math.round((last-first)/first*100) : 0;
+  const deltas = history.map((h,i)=>i===0?0:h.total-history[i-1].total).slice(1);
+  const avgDaily = deltas.length ? Math.round(deltas.reduce((a,b)=>a+b,0)/deltas.length) : 0;
+  const maxDaily = deltas.length ? Math.max(...deltas) : 0;
+
+  document.getElementById('histKpi').innerHTML=`
+    <div class="kpi" style="--accent-color:var(--blue)"><span class="kpi-val">${history.length}d</span><div class="kpi-label">已追踪天数</div></div>
+    <div class="kpi" style="--accent-color:var(--green)"><span class="kpi-val">+${totalGrowth}%</span><div class="kpi-label">追踪期间总增幅</div></div>
+    <div class="kpi" style="--accent-color:var(--orange)"><span class="kpi-val">${fmt(avgDaily)}</span><div class="kpi-label">日均新增 Skills</div></div>
+    <div class="kpi" style="--accent-color:var(--gold)"><span class="kpi-val">${fmt(maxDaily)}</span><div class="kpi-label">单日最大增量</div></div>
+    <div class="kpi" style="--accent-color:var(--teal)"><span class="kpi-val">${last.toLocaleString()}</span><div class="kpi-label">当前总量</div></div>
+  `;
+
+  const range = history.length>1
+    ? `${history[0].date} → ${history[history.length-1].date}，共 ${history.length} 天`
+    : '数据积累中…';
+  document.getElementById('historyRange').textContent = range;
+
+  drawTimeline('fullHistoryCanvas','fullHistoryLabels', history, false);
+
+  // Daily delta bar chart
+  const canvas=document.getElementById('dailyDeltaCanvas');
+  if(canvas && deltas.length){
+    const dpr=devicePixelRatio||1;
+    canvas.width=canvas.offsetWidth*dpr; canvas.height=160*dpr;
+    const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
+    const W=canvas.offsetWidth,H=160,PAD={l:42,r:10,t:10,b:8};
+    const cw=W-PAD.l-PAD.r,ch=H-PAD.t-PAD.b,maxD=Math.max(...deltas)||1;
+    const bw=Math.max(2,cw/deltas.length*0.7);
+
+    [0,.5,1].forEach(f=>{
+      const y=PAD.t+ch*(1-f);
+      ctx.strokeStyle='#1a2332';ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(PAD.l,y);ctx.lineTo(PAD.l+cw,y);ctx.stroke();
+      ctx.fillStyle='#4a5568';ctx.font=`9px 'DM Mono',monospace`;ctx.textAlign='right';
+      ctx.fillText(Math.round(maxD*f),PAD.l-4,y+3);
+    });
+
+    deltas.forEach((d,i)=>{
+      const x=PAD.l+(i/(deltas.length-1||1))*cw;
+      const bh=(d/maxD)*ch;
+      ctx.fillStyle=d===maxD?'#e3b34166':'#58a6ff33';
+      ctx.fillRect(x-bw/2,PAD.t+ch-bh,bw,bh);
+      ctx.strokeStyle=d===maxD?'#e3b341':'#58a6ff55';
+      ctx.lineWidth=1;ctx.strokeRect(x-bw/2,PAD.t+ch-bh,bw,bh);
+    });
+
+    // labels
+    const labEl=document.getElementById('deltaLabels');
+    if(labEl){
+      const step=Math.max(1,Math.floor(deltas.length/6));
+      const shown=[];
+      for(let i=0;i<deltas.length;i+=step) shown.push(history[i+1]?.date.slice(5)||'');
+      labEl.innerHTML=shown.map(d=>`<span>${d}</span>`).join('');
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
+const viewMeta={
+  overview: {title:'全市场总览',sub:'从 data.json 实时读取'},
+  byagent:  {title:'按 AI 智能体分类',sub:'9个平台 · 数量 & 增速对比'},
+  bycategory:{title:'按行业分类',sub:'12个分类 · 总量降序 + 增速排名'},
+  bytype:   {title:'按技能类型分类',sub:'工作流/插件/命令/Agent/Stack/连接器'},
+  history:  {title:'历史趋势',sub:'每日自动抓取累积'},
+};
+const renderers={byagent:renderByAgent,bycategory:renderByCategory,bytype:renderByType,history:renderHistory};
+
+document.querySelectorAll('.nav-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const v=btn.dataset.view;
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+    document.getElementById('view-'+v).classList.add('active');
+    document.getElementById('viewTitle').textContent=viewMeta[v].title;
+    document.getElementById('viewSub').textContent=viewMeta[v].sub;
+    if(!rendered.has(v)){rendered.add(v); renderers[v]?.();}
+  });
+});
+
+loadData();
+</script>
+</body>
+</html>

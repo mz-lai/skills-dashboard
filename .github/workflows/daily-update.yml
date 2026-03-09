@@ -1,0 +1,57 @@
+name: Daily Skills Data Update
+
+on:
+  schedule:
+    # 每天北京时间 08:00 运行（UTC 00:00）
+    - cron: "0 0 * * *"
+  # 允许手动触发（在 GitHub Actions 页面点 "Run workflow"）
+  workflow_dispatch:
+
+permissions:
+  contents: write   # 允许 push data.json 回仓库
+  pages: write
+  id-token: write
+
+jobs:
+  scrape-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 检出代码
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # 需要完整历史来保留 data.json 的变更记录
+
+      # 2. 设置 Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # 3. 运行爬虫（纯标准库，无需安装依赖）
+      - name: Run scraper
+        run: python scripts/scraper.py
+
+      # 4. 如果 data.json 有变化，提交回仓库
+      - name: Commit updated data.json
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data.json
+          # 只在文件真的有变化时才 commit
+          git diff --cached --quiet || git commit -m "chore: daily data update $(date -u +%Y-%m-%d)"
+          git push
+
+      # 5. 部署到 GitHub Pages
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "."   # 整个仓库根目录作为 Pages 内容
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
