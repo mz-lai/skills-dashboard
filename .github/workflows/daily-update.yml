@@ -31,7 +31,7 @@ jobs:
 
       # 3. 运行爬虫（纯标准库，无需安装依赖）
       - name: Run scraper
-        run: python scripts/scraper.py
+        run: python3 scripts/scraper.py
 
       # 4. 如果 data.json 有变化，提交回仓库
       - name: Commit updated data.json
