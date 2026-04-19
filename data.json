@@ -1,7 +1,7 @@
 {
   "meta": {
-    "updated_at": "2026-04-18T01:22:52.591697+00:00",
-    "updated_date": "2026-04-18",
+    "updated_at": "2026-04-19T01:45:48.078049+00:00",
+    "updated_date": "2026-04-19",
     "sources": [
       "skillhub.club",
       "skillsmp.com",
@@ -16,20 +16,20 @@
   "github": {
     "repos": {
       "anthropics/financial-services-plugins": {
-        "stars": 7611,
-        "forks": 964,
-        "updated": "2026-04-18T01:19:40Z",
-        "watchers": 7611
+        "stars": 7645,
+        "forks": 967,
+        "updated": "2026-04-19T01:29:51Z",
+        "watchers": 7645
       },
       "anthropics/claude-code": {
-        "stars": 115277,
-        "forks": 19235,
-        "updated": "2026-04-18T01:21:20Z",
-        "watchers": 115277
+        "stars": 115590,
+        "forks": 19288,
+        "updated": "2026-04-19T01:37:17Z",
+        "watchers": 115590
       }
     },
     "skill_md_count": 2,
-    "topic_claude_skills": 2198
+    "topic_claude_skills": 2228
   },
   "skillsmp": {
     "total": null
@@ -197,6 +197,10 @@
     },
     {
       "date": "2026-04-18",
+      "total": 22700
+    },
+    {
+      "date": "2026-04-19",
       "total": 22700
     }
   ],
